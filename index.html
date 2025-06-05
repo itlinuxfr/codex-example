@@ -76,6 +76,7 @@ button:hover {
 }
 .edit:hover,.delete:hover {
   color:#000;
+  margin-left: 10px;
 }
 .list {
   min-height: 50px;
@@ -247,6 +248,33 @@ function updateNumbers() {
     const n = div.querySelector('.num');
     if (n) n.textContent = `${i + 1}.`;
   });
+=======
+ const div = document.createElement('div');
+ div.className = 'exercise';
+ const span = document.createElement('span');
+ span.innerText = `${item.name} - ${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+ const toggle = document.createElement('button');
+ toggle.className = 'toggle';
+ toggle.innerText = item.success ? 'Réussi' : 'En progression';
+ toggle.onclick = () => {
+   item.success = !item.success;
+   toggle.innerText = item.success ? 'Réussi' : 'En progression';
+   div.dataset.json = JSON.stringify(item);
+   save();
+ };
+ div.ondblclick = () => {
+   const w = prompt('Poids (kg)', item.weight);
+   const r = prompt('Repos (sec)', item.rest);
+   if (w !== null) item.weight = w;
+   if (r !== null) item.rest = r;
+   span.innerText = `${item.name} - ${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+   div.dataset.json = JSON.stringify(item);
+   save();
+ };
+ div.appendChild(span);
+ div.appendChild(toggle);
+ div.dataset.json = JSON.stringify(item);
+ list.appendChild(div);
 }
 function save() {
  const items = [...list.children].map(div => JSON.parse(div.dataset.json));
