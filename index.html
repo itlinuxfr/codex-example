@@ -5,7 +5,8 @@
 <title>Programme de Musculation</title>
 <style>
 body {
-  font-family: Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color:#333;
   margin: 40px;
   background: #f5f5f5;
 }
@@ -17,7 +18,7 @@ h1 {
   margin: 0 auto;
   background: #fff;
   padding: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   border-radius: 6px;
 }
 label {
@@ -45,6 +46,9 @@ button:hover {
   background: #0056b3;
 }
 .exercise {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   border: 1px solid #ccc;
   padding: 10px;
   margin-top: 10px;
@@ -55,17 +59,51 @@ button:hover {
 .exercise:hover {
   background: #f0f0f0;
 }
+.toggle {
+  margin-left:10px;
+}
+.num {
+  width:24px;
+  display:inline-block;
+}
+
+.edit,.delete {
+  margin-left:5px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  color:#555;
+}
+.edit:hover,.delete:hover {
+  color:#000;
+}
 .list {
   min-height: 50px;
 }
 .day-selector {
-  margin-bottom: 20px;
+  display:none;
+}
+.day-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+.day-table td.active {
+  background:#007bff;
+  color:#fff;
+}
+.day-table {
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:20px;
 }
 </style>
 </head>
 <body>
 <div class="container">
 <h1>Programme de Musculation</h1>
+<table id="dayTable" class="day-table"><tr><td data-day="lundi">Lun</td><td data-day="mardi">Mar</td><td data-day="mercredi">Mer</td><td data-day="jeudi">Jeu</td><td data-day="vendredi">Ven</td><td data-day="samedi">Sam</td><td data-day="dimanche">Dim</td></tr></table>
 <select id="day" class="day-selector">
 <option value="lundi">Lundi</option>
 <option value="mardi">Mardi</option>
@@ -91,37 +129,171 @@ button:hover {
 <div class="list" id="exerciseList"></div>
 <button id="save">Sauvegarder</button>
 <button id="export">Exporter en PDF</button>
+<div id="user">
+<h2>Informations Utilisateur</h2>
+<label>Âge</label>
+<input type="number" id="age"/>
+<label>Taille (cm)</label>
+<input type="number" id="height"/>
+<label>Sexe</label>
+<select id="sex"><option value="male">Homme</option><option value="female">Femme</option></select>
+<label>Poids (kg)</label>
+<input type="number" id="currentWeightInput"/>
+<label>Activité</label>
+<select id="activity"><option value="1.2">Sédentaire</option><option value="1.375">Légère</option><option value="1.55">Modérée</option><option value="1.725">Intense</option><option value="1.9">Très intense</option></select>
+<button id="calcBmr">Calculer</button>
+<div id="calories"></div>
+</div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 const daySelect = document.getElementById('day');
 const list = document.getElementById('exerciseList');
-new Sortable(list, { animation: 150, onSort: save });
+const ageInput = document.getElementById('age');
+const heightInput = document.getElementById('height');
+const sexInput = document.getElementById('sex');
+const weightInput = document.getElementById('currentWeightInput');
+const activityInput = document.getElementById('activity');
+const caloriesDiv = document.getElementById('calories');
+const dayCells = document.querySelectorAll('#dayTable td');
+dayCells.forEach(td => {
+  td.onclick = () => {
+    dayCells.forEach(c => c.classList.remove('active'));
+    td.classList.add('active');
+    daySelect.value = td.dataset.day;
+    load();
+  };
+});
+function initDay() {
+  const cur = daySelect.value;
+  dayCells.forEach(c => {
+    if (c.dataset.day === cur) c.classList.add('active');
+  });
+}
+new Sortable(list, { animation: 150, onSort: () => { updateNumbers(); save(); } });
 function load() {
  const data = localStorage.getItem(daySelect.value);
  list.innerHTML = '';
  if (data) JSON.parse(data).forEach(addItemToDOM);
+ updateNumbers();
 }
 function addItemToDOM(item) {
- const div = document.createElement('div');
- div.className = 'exercise';
- div.innerText = `${item.name} - ${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
- div.dataset.json = JSON.stringify(item);
- list.appendChild(div);
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  const num = document.createElement('span');
+  num.className = 'num';
+  const span = document.createElement('span');
+  const toggle = document.createElement('button');
+  const edit = document.createElement('button');
+  const remove = document.createElement('button');
+
+  function updateText() {
+    span.innerText = `${item.name} - ${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+  }
+
+  updateText();
+  toggle.className = 'toggle';
+  toggle.innerText = item.success ? 'Réussi' : 'En progression';
+  toggle.onclick = () => {
+    item.success = !item.success;
+    toggle.innerText = item.success ? 'Réussi' : 'En progression';
+    div.dataset.json = JSON.stringify(item);
+    save();
+  };
+
+  edit.className = 'edit';
+  edit.textContent = '✎';
+  edit.onclick = () => {
+    const n = prompt('Exercice', item.name);
+    const s = prompt('Séries', item.series);
+    const rps = prompt('Répétitions', item.reps);
+    const w = prompt('Poids (kg)', item.weight);
+    const r = prompt('Repos (sec)', item.rest);
+    if (n) item.name = n;
+    if (s) item.series = s;
+    if (rps) item.reps = rps;
+    if (w) item.weight = w;
+    if (r) item.rest = r;
+    updateText();
+    div.dataset.json = JSON.stringify(item);
+    save();
+  };
+
+  remove.className = 'delete';
+  remove.textContent = '✕';
+  remove.onclick = () => {
+    div.remove();
+    save();
+  };
+
+  div.append(num, span, toggle, edit, remove);
+  div.dataset.json = JSON.stringify(item);
+  list.appendChild(div);
+  updateNumbers();
+}
+function updateNumbers() {
+  [...list.children].forEach((div, i) => {
+    const n = div.querySelector('.num');
+    if (n) n.textContent = `${i + 1}.`;
+  });
 }
 function save() {
  const items = [...list.children].map(div => JSON.parse(div.dataset.json));
  localStorage.setItem(daySelect.value, JSON.stringify(items));
 }
+
+function loadUser() {
+ const data = localStorage.getItem('user');
+ if (data) {
+   const u = JSON.parse(data);
+   ageInput.value = u.age || '';
+   heightInput.value = u.height || '';
+   sexInput.value = u.sex || 'male';
+   weightInput.value = u.weight || '';
+  activityInput.value = u.activity || '1.2';
+   if (u.age && u.height && u.weight) {
+     const bmr = u.sex === 'male'
+       ? 10 * u.weight + 6.25 * u.height - 5 * u.age + 5
+       : 10 * u.weight + 6.25 * u.height - 5 * u.age - 161;
+     const maintain = bmr * parseFloat(u.activity || '1.2');
+     const lose = maintain - 500;
+     const gain = maintain + 500;
+     caloriesDiv.innerText = `Maintien: ${Math.round(maintain)} kcal - Perte: ${Math.round(lose)} kcal - Prise: ${Math.round(gain)} kcal`;
+   }
+ }
+}
+
+function saveUser(u) {
+ localStorage.setItem('user', JSON.stringify(u));
+}
+
+document.getElementById('calcBmr').onclick = () => {
+ const user = {
+   age: parseFloat(ageInput.value),
+   height: parseFloat(heightInput.value),
+   sex: sexInput.value,
+   weight: parseFloat(weightInput.value),
+   activity: parseFloat(activityInput.value)
+ };
+ saveUser(user);
+ const bmr = user.sex === 'male'
+   ? 10 * user.weight + 6.25 * user.height - 5 * user.age + 5
+   : 10 * user.weight + 6.25 * user.height - 5 * user.age - 161;
+ const maintain = bmr * user.activity;
+ const lose = maintain - 500;
+ const gain = maintain + 500;
+ caloriesDiv.innerText = `Maintien: ${Math.round(maintain)} kcal - Perte: ${Math.round(lose)} kcal - Prise: ${Math.round(gain)} kcal`;
+};
 document.getElementById('addExercise').onclick = () => {
  const item = {
    name: document.getElementById('exerciseName').value,
    series: document.getElementById('series').value,
    reps: document.getElementById('reps').value,
    weight: document.getElementById('weight').value,
-   rest: document.getElementById('rest').value
- };
+   rest: document.getElementById('rest').value,
+   success: false
+};
  addItemToDOM(item);
  save();
 };
@@ -139,7 +311,9 @@ document.getElementById('export').onclick = () => {
 };
 
 daySelect.onchange = load;
+initDay();
 load();
+loadUser();
 </script>
 </body>
 </html>
