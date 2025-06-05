@@ -55,6 +55,9 @@ button:hover {
 .exercise:hover {
   background: #f0f0f0;
 }
+.toggle {
+  margin-left: 10px;
+}
 .list {
   min-height: 50px;
 }
@@ -91,12 +94,33 @@ button:hover {
 <div class="list" id="exerciseList"></div>
 <button id="save">Sauvegarder</button>
 <button id="export">Exporter en PDF</button>
+<div id="user">
+<h2>Informations Utilisateur</h2>
+<label>Âge</label>
+<input type="number" id="age"/>
+<label>Taille (cm)</label>
+<input type="number" id="height"/>
+<label>Sexe</label>
+<select id="sex"><option value="male">Homme</option><option value="female">Femme</option></select>
+<label>Poids (kg)</label>
+<input type="number" id="currentWeightInput"/>
+<label>Activité</label>
+<select id="activity"><option value="1.2">Sédentaire</option><option value="1.375">Légère</option><option value="1.55">Modérée</option><option value="1.725">Intense</option><option value="1.9">Très intense</option></select>
+<button id="calcBmr">Calculer</button>
+<div id="calories"></div>
+</div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 const daySelect = document.getElementById('day');
 const list = document.getElementById('exerciseList');
+const ageInput = document.getElementById('age');
+const heightInput = document.getElementById('height');
+const sexInput = document.getElementById('sex');
+const weightInput = document.getElementById('currentWeightInput');
+const activityInput = document.getElementById('activity');
+const caloriesDiv = document.getElementById('calories');
 new Sortable(list, { animation: 150, onSort: save });
 function load() {
  const data = localStorage.getItem(daySelect.value);
@@ -106,7 +130,28 @@ function load() {
 function addItemToDOM(item) {
  const div = document.createElement('div');
  div.className = 'exercise';
- div.innerText = `${item.name} - ${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+ const span = document.createElement('span');
+ span.innerText = `${item.name} - ${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+ const toggle = document.createElement('button');
+ toggle.className = 'toggle';
+ toggle.innerText = item.success ? 'Réussi' : 'En progression';
+ toggle.onclick = () => {
+   item.success = !item.success;
+   toggle.innerText = item.success ? 'Réussi' : 'En progression';
+   div.dataset.json = JSON.stringify(item);
+   save();
+ };
+ div.ondblclick = () => {
+   const w = prompt('Poids (kg)', item.weight);
+   const r = prompt('Repos (sec)', item.rest);
+   if (w !== null) item.weight = w;
+   if (r !== null) item.rest = r;
+   span.innerText = `${item.name} - ${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+   div.dataset.json = JSON.stringify(item);
+   save();
+ };
+ div.appendChild(span);
+ div.appendChild(toggle);
  div.dataset.json = JSON.stringify(item);
  list.appendChild(div);
 }
@@ -114,14 +159,58 @@ function save() {
  const items = [...list.children].map(div => JSON.parse(div.dataset.json));
  localStorage.setItem(daySelect.value, JSON.stringify(items));
 }
+
+function loadUser() {
+ const data = localStorage.getItem('user');
+ if (data) {
+   const u = JSON.parse(data);
+   ageInput.value = u.age || '';
+   heightInput.value = u.height || '';
+   sexInput.value = u.sex || 'male';
+   weightInput.value = u.weight || '';
+  activityInput.value = u.activity || '1.2';
+   if (u.age && u.height && u.weight) {
+     const bmr = u.sex === 'male'
+       ? 10 * u.weight + 6.25 * u.height - 5 * u.age + 5
+       : 10 * u.weight + 6.25 * u.height - 5 * u.age - 161;
+     const maintain = bmr * parseFloat(u.activity || '1.2');
+     const lose = maintain - 500;
+     const gain = maintain + 500;
+     caloriesDiv.innerText = `Maintien: ${Math.round(maintain)} kcal - Perte: ${Math.round(lose)} kcal - Prise: ${Math.round(gain)} kcal`;
+   }
+ }
+}
+
+function saveUser(u) {
+ localStorage.setItem('user', JSON.stringify(u));
+}
+
+document.getElementById('calcBmr').onclick = () => {
+ const user = {
+   age: parseFloat(ageInput.value),
+   height: parseFloat(heightInput.value),
+   sex: sexInput.value,
+   weight: parseFloat(weightInput.value),
+   activity: parseFloat(activityInput.value)
+ };
+ saveUser(user);
+ const bmr = user.sex === 'male'
+   ? 10 * user.weight + 6.25 * user.height - 5 * user.age + 5
+   : 10 * user.weight + 6.25 * user.height - 5 * user.age - 161;
+ const maintain = bmr * user.activity;
+ const lose = maintain - 500;
+ const gain = maintain + 500;
+ caloriesDiv.innerText = `Maintien: ${Math.round(maintain)} kcal - Perte: ${Math.round(lose)} kcal - Prise: ${Math.round(gain)} kcal`;
+};
 document.getElementById('addExercise').onclick = () => {
  const item = {
    name: document.getElementById('exerciseName').value,
    series: document.getElementById('series').value,
    reps: document.getElementById('reps').value,
    weight: document.getElementById('weight').value,
-   rest: document.getElementById('rest').value
- };
+   rest: document.getElementById('rest').value,
+   success: false
+};
  addItemToDOM(item);
  save();
 };
@@ -140,6 +229,7 @@ document.getElementById('export').onclick = () => {
 
 daySelect.onchange = load;
 load();
+loadUser();
 </script>
 </body>
 </html>
