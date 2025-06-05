@@ -5,7 +5,8 @@
 <title>Programme de Musculation</title>
 <style>
 body {
-  font-family: Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color:#333;
   margin: 40px;
   background: #f5f5f5;
 }
@@ -17,7 +18,7 @@ h1 {
   margin: 0 auto;
   background: #fff;
   padding: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   border-radius: 6px;
 }
 label {
@@ -45,6 +46,9 @@ button:hover {
   background: #0056b3;
 }
 .exercise {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   border: 1px solid #ccc;
   padding: 10px;
   margin-top: 10px;
@@ -56,19 +60,61 @@ button:hover {
   background: #f0f0f0;
 }
 .toggle {
+  margin-left:10px;
+}
+.num {
+  width:24px;
+  display:inline-block;
+}
+
+.edit,.delete {
+  margin-left:5px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  color:#555;
+}
+.edit:hover,.delete:hover {
+  color:#000;
   margin-left: 10px;
 }
 .list {
   min-height: 50px;
 }
 .day-selector {
-  margin-bottom: 20px;
+  display:none;
+}
+.day-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+.day-table td.active {
+  background:#007bff;
+  color:#fff;
+}
+.day-table {
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:20px;
 }
 </style>
 </head>
 <body>
 <div class="container">
 <h1>Programme de Musculation</h1>
+<table id="dayTable" class="day-table">
+  <tr>
+    <td data-day="lundi">Lun</td>
+    <td data-day="mardi">Mar</td>
+    <td data-day="mercredi">Mer</td>
+    <td data-day="jeudi">Jeu</td>
+    <td data-day="vendredi">Ven</td>
+    <td data-day="samedi">Sam</td>
+    <td data-day="dimanche">Dim</td>
+  </tr>
+</table>
 <select id="day" class="day-selector">
 <option value="lundi">Lundi</option>
 <option value="mardi">Mardi</option>
@@ -121,13 +167,88 @@ const sexInput = document.getElementById('sex');
 const weightInput = document.getElementById('currentWeightInput');
 const activityInput = document.getElementById('activity');
 const caloriesDiv = document.getElementById('calories');
-new Sortable(list, { animation: 150, onSort: save });
+const dayCells = document.querySelectorAll('#dayTable td');
+dayCells.forEach(td => {
+  td.onclick = () => {
+    dayCells.forEach(c => c.classList.remove('active'));
+    td.classList.add('active');
+    daySelect.value = td.dataset.day;
+    load();
+  };
+});
+function initDay() {
+  const cur = daySelect.value;
+  dayCells.forEach(c => {
+    if (c.dataset.day === cur) c.classList.add('active');
+  });
+}
+new Sortable(list, { animation: 150, onSort: () => { updateNumbers(); save(); } });
 function load() {
  const data = localStorage.getItem(daySelect.value);
  list.innerHTML = '';
  if (data) JSON.parse(data).forEach(addItemToDOM);
+ updateNumbers();
 }
 function addItemToDOM(item) {
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  const num = document.createElement('span');
+  num.className = 'num';
+  const span = document.createElement('span');
+  const toggle = document.createElement('button');
+  const edit = document.createElement('button');
+  const remove = document.createElement('button');
+
+  function updateText() {
+    span.innerText = `${item.name} - ${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+  }
+
+  updateText();
+  toggle.className = 'toggle';
+  toggle.innerText = item.success ? 'Réussi' : 'En progression';
+  toggle.onclick = () => {
+    item.success = !item.success;
+    toggle.innerText = item.success ? 'Réussi' : 'En progression';
+    div.dataset.json = JSON.stringify(item);
+    save();
+  };
+
+  edit.className = 'edit';
+  edit.textContent = '✎';
+  edit.onclick = () => {
+    const n = prompt('Exercice', item.name);
+    const s = prompt('Séries', item.series);
+    const rps = prompt('Répétitions', item.reps);
+    const w = prompt('Poids (kg)', item.weight);
+    const r = prompt('Repos (sec)', item.rest);
+    if (n) item.name = n;
+    if (s) item.series = s;
+    if (rps) item.reps = rps;
+    if (w) item.weight = w;
+    if (r) item.rest = r;
+    updateText();
+    div.dataset.json = JSON.stringify(item);
+    save();
+  };
+
+  remove.className = 'delete';
+  remove.textContent = '✕';
+  remove.onclick = () => {
+    div.remove();
+    save();
+  };
+
+  div.append(num, span, toggle, edit, remove);
+  div.dataset.json = JSON.stringify(item);
+  list.appendChild(div);
+  updateNumbers();
+}
+function updateNumbers() {
+  [...list.children].forEach((div, i) => {
+    const n = div.querySelector('.num');
+    if (n) n.textContent = `${i + 1}.`;
+  });
+=======
  const div = document.createElement('div');
  div.className = 'exercise';
  const span = document.createElement('span');
@@ -228,6 +349,7 @@ document.getElementById('export').onclick = () => {
 };
 
 daySelect.onchange = load;
+initDay();
 load();
 loadUser();
 </script>
