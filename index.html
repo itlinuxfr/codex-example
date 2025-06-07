@@ -19,16 +19,26 @@ body {
   background-size:400% 400%;
   animation:gradient 15s ease infinite;
 }
+.day-table {
+  border-collapse:separate;
+  border-spacing:.25rem;
+}
+.day-table td {
+  padding:.5rem;
+  text-align:center;
+  border-radius:.375rem;
+  background:#f8fafc;
+  color:#1f2937;
+  cursor:pointer;
+  transition:background-color .3s,color .3s;
+}
+.day-table td:hover {
+  background:#e2e8f0;
+}
 .day-table td.active {
   background:#0ea5e9;
   color:#fff;
-}
-.day-table td {
-  cursor:pointer;
-  transition:background-color .3s;
-}
-.day-table td:hover {
-  background:#e5e7eb;
+  font-weight:600;
 }
 .edit,.delete {
   background:none;
