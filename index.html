@@ -305,18 +305,62 @@ document.getElementById('save').onclick = save;
 document.getElementById('export').onclick = () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  doc.text(`Programme du ${daySelect.value}`, 10, 10);
-  const rows = [...list.children].map((div, i) => {
-    const item = JSON.parse(div.dataset.json);
-    const details = `${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
-    return [i + 1, item.name, details];
+  const days = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+  let y = 10;
+
+  days.forEach(day => {
+    const data = localStorage.getItem(day);
+    if (!data) return;
+    const items = JSON.parse(data);
+    if (!items.length) return;
+    doc.text(day.charAt(0).toUpperCase() + day.slice(1), 10, y);
+    y += 5;
+    const rows = items.map((item, i) => {
+      const details = `${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+      return [i + 1, item.name, details];
+    });
+    doc.autoTable({ head: [['#', 'Exercice', 'Détails']], body: rows, startY: y });
+    y = doc.lastAutoTable.finalY + 10;
   });
-  doc.autoTable({
-    head: [['#', 'Exercice', 'Détails']],
-    body: rows,
-    startY: 20
-  });
-  doc.save(`programme-${daySelect.value}.pdf`);
+
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    const u = JSON.parse(userData);
+    if (u.age && u.height && u.weight) {
+      const bmr = u.sex === 'male'
+        ? 10 * u.weight + 6.25 * u.height - 5 * u.age + 5
+        : 10 * u.weight + 6.25 * u.height - 5 * u.age - 161;
+      const maintain = bmr * parseFloat(u.activity || '1.2');
+      const lose = maintain - 500;
+      const gain = maintain + 500;
+      const m = getMacros(u.weight, 'maintain');
+      const l = getMacros(u.weight, 'lose');
+      const g = getMacros(u.weight, 'gain');
+      doc.text('Calories', 10, y);
+      y += 5;
+      doc.autoTable({
+        head: [['Objectif', 'Protéines', 'Glucides', 'Lipides']],
+        body: [
+          ['Maintien', `${m.grams.protein.toFixed(0)} g (${Math.round(m.calories.protein)} kcal)`,
+                      `${m.grams.carbs.toFixed(0)} g (${Math.round(m.calories.carbs)} kcal)`,
+                      `${m.grams.fat.toFixed(0)} g (${Math.round(m.calories.fat)} kcal)`],
+          ['Perte', `${l.grams.protein.toFixed(0)} g (${Math.round(l.calories.protein)} kcal)`,
+                   `${l.grams.carbs.toFixed(0)} g (${Math.round(l.calories.carbs)} kcal)`,
+                   `${l.grams.fat.toFixed(0)} g (${Math.round(l.calories.fat)} kcal)`],
+          ['Prise', `${g.grams.protein.toFixed(0)} g (${Math.round(g.calories.protein)} kcal)`,
+                   `${g.grams.carbs.toFixed(0)} g (${Math.round(g.calories.carbs)} kcal)`,
+                   `${g.grams.fat.toFixed(0)} g (${Math.round(g.calories.fat)} kcal)`]
+        ],
+        startY: y
+      });
+      y = doc.lastAutoTable.finalY + 10;
+      doc.text(`Maintien: ${Math.round(maintain)} kcal`, 10, y); y += 5;
+      doc.text(`Perte: ${Math.round(lose)} kcal`, 10, y); y += 5;
+      doc.text(`Prise: ${Math.round(gain)} kcal`, 10, y); y += 5;
+    }
+  }
+
+  doc.save('programme.pdf');
 };
 
 daySelect.onchange = load;
