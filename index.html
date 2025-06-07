@@ -188,7 +188,15 @@ function load() {
  const data = localStorage.getItem(daySelect.value);
  list.innerHTML = '';
  const items = data ? JSON.parse(data) : [];
- items.forEach(addItemToDOM);
+ let modified = false;
+ items.forEach(it => {
+   if (!it.history) {
+     it.history = [{ date: new Date().toLocaleDateString('fr-CA'), weight: it.weight }];
+     modified = true;
+   }
+   addItemToDOM(it);
+ });
+ if (modified) localStorage.setItem(daySelect.value, JSON.stringify(items));
  header.classList.toggle('hidden', items.length === 0);
  updateNumbers();
 }
@@ -205,6 +213,7 @@ function addItemToDOM(item) {
   const actions = document.createElement('div');
   actions.className = 'flex gap-1';
   const toggle = document.createElement('button');
+  const historyBtn = document.createElement('button');
   const edit = document.createElement('button');
   const remove = document.createElement('button');
 
@@ -226,6 +235,13 @@ function addItemToDOM(item) {
     save();
   };
 
+  historyBtn.className = 'history ml-2 text-gray-500 hover:text-gray-800';
+  historyBtn.textContent = '📈';
+  historyBtn.onclick = () => {
+    const lines = item.history.map(h => `${h.date} : ${h.weight}kg`).join('\n');
+    alert(lines || 'Aucune donnée de progression');
+  };
+
   edit.className = 'edit ml-2 text-gray-500 hover:text-gray-800';
   edit.textContent = '✎';
   edit.onclick = () => {
@@ -237,7 +253,10 @@ function addItemToDOM(item) {
     if (n) item.name = n;
     if (s) item.series = s;
     if (rps) item.reps = rps;
-    if (w) item.weight = w;
+    if (w && w !== item.weight) {
+      item.weight = w;
+      item.history.push({ date: new Date().toLocaleDateString('fr-CA'), weight: w });
+    }
     if (r) item.rest = r;
     updateText();
     div.dataset.json = JSON.stringify(item);
@@ -252,7 +271,7 @@ function addItemToDOM(item) {
     save();
   };
 
-  actions.append(toggle, edit, remove);
+  actions.append(toggle, historyBtn, edit, remove);
   div.append(num, nameSpan, seriesSpan, repsSpan, weightSpan, restSpan, actions);
   div.dataset.json = JSON.stringify(item);
   list.appendChild(div);
@@ -319,7 +338,8 @@ document.getElementById('addExercise').onclick = () => {
    reps: document.getElementById('reps').value,
    weight: document.getElementById('weight').value,
    rest: document.getElementById('rest').value,
-   success: false
+   success: false,
+   history: [{ date: new Date().toLocaleDateString('fr-CA'), weight: document.getElementById('weight').value }]
 };
  addItemToDOM(item);
  save();
