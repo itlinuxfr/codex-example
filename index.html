@@ -2,108 +2,46 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
 <title>Programme de Musculation</title>
 <style>
+@keyframes gradient {
+  0% {background-position:0% 50%;}
+  50% {background-position:100% 50%;}
+  100% {background-position:0% 50%;}
+}
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color:#333;
-  margin: 40px;
-  background: #f5f5f5;
+  font-family:'Inter',sans-serif;
+  background:linear-gradient(-45deg,#f8fafc,#e2e8f0,#f8fafc,#e2e8f0);
+  background-size:400% 400%;
+  animation:gradient 15s ease infinite;
 }
-h1 {
-  text-align: center;
+.day-table td.active {
+  background:#0ea5e9;
+  color:#fff;
 }
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  background: #fff;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  border-radius: 6px;
+.day-table td {
+  cursor:pointer;
+  transition:background-color .3s;
 }
-label {
-  display: block;
-  margin-top: 10px;
+.day-table td:hover {
+  background:#e5e7eb;
 }
-input,
-select {
-  width: 100%;
-  padding: 8px;
-  margin-top: 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-button {
-  margin-top: 10px;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  background: #007bff;
-  color: #fff;
-  cursor: pointer;
-}
-button:hover {
-  background: #0056b3;
-}
-.exercise {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-top: 10px;
-  background: #fafafa;
-  cursor: move;
-  border-radius: 4px;
-}
-.exercise:hover {
-  background: #f0f0f0;
-}
-.toggle {
-  margin-left:10px;
-}
-.num {
-  width:24px;
-  display:inline-block;
-}
-
 .edit,.delete {
-  margin-left:5px;
   background:none;
   border:none;
   cursor:pointer;
-  color:#555;
-}
-.edit:hover,.delete:hover {
-  color:#000;
-}
-.list {
-  min-height: 50px;
-}
-.day-selector {
-  display:none;
-}
-.day-table td {
-  border: 1px solid #ddd;
-  padding: 10px;
-  cursor: pointer;
-  text-align: center;
-}
-.day-table td.active {
-  background:#007bff;
-  color:#fff;
-}
-.day-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-bottom:20px;
+  transition:color .3s;
 }
 </style>
 </head>
 <body>
-<div class="container">
-<h1>Programme de Musculation</h1>
-<table id="dayTable" class="day-table">
+<div class="container max-w-3xl mx-auto bg-white/80 backdrop-blur-md p-8 mt-10 rounded-xl shadow-2xl">
+<h1 class="text-3xl font-semibold text-center mb-6">Programme de Musculation</h1>
+<table id="dayTable" class="day-table w-full border-collapse mb-4">
   <tr>
     <td data-day="lundi">Lun</td>
     <td data-day="mardi">Mar</td>
@@ -114,7 +52,7 @@ button:hover {
     <td data-day="dimanche">Dim</td>
   </tr>
 </table>
-<select id="day" class="day-selector">
+<select id="day" class="day-selector hidden">
 <option value="lundi">Lundi</option>
 <option value="mardi">Mardi</option>
 <option value="mercredi">Mercredi</option>
@@ -123,37 +61,40 @@ button:hover {
 <option value="samedi">Samedi</option>
 <option value="dimanche">Dimanche</option>
 </select>
-<div>
+<div class="space-y-2">
 <label>Exercice</label>
-<input type="text" id="exerciseName" />
+<input class="border rounded w-full p-2 mt-1" type="text" id="exerciseName" />
 <label>Séries</label>
-<input type="number" id="series" />
+<input class="border rounded w-full p-2 mt-1" type="number" id="series" />
 <label>Répétitions</label>
-<input type="number" id="reps" />
+<input class="border rounded w-full p-2 mt-1" type="number" id="reps" />
 <label>Poids (kg)</label>
-<input type="number" id="weight" />
+<input class="border rounded w-full p-2 mt-1" type="number" id="weight" />
 <label>Repos (sec)</label>
-<input type="number" id="rest" />
-<button id="addExercise">Ajouter</button>
+<input class="border rounded w-full p-2 mt-1" type="number" id="rest" />
+<button id="addExercise" class="mt-2 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Ajouter</button>
 </div>
-<div class="list" id="exerciseList"></div>
-<button id="save">Sauvegarder</button>
-<button id="export">Exporter en PDF</button>
-<div id="user">
-<h2>Informations Utilisateur</h2>
+<div class="list min-h-[50px] space-y-2" id="exerciseList"></div>
+<button id="save" class="mt-4 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Sauvegarder</button>
+<button id="export" class="mt-4 ml-2 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Exporter en PDF</button>
+<div id="user" class="mt-6">
+<h2 class="text-xl font-semibold mb-2">Informations Utilisateur</h2>
 <label>Âge</label>
-<input type="number" id="age"/>
+<input class="border rounded w-full p-2 mt-1" type="number" id="age"/>
 <label>Taille (cm)</label>
-<input type="number" id="height"/>
+<input class="border rounded w-full p-2 mt-1" type="number" id="height"/>
 <label>Sexe</label>
-<select id="sex"><option value="male">Homme</option><option value="female">Femme</option></select>
+<select class="border rounded w-full p-2 mt-1" id="sex"><option value="male">Homme</option><option value="female">Femme</option></select>
 <label>Poids (kg)</label>
-<input type="number" id="currentWeightInput"/>
+<input class="border rounded w-full p-2 mt-1" type="number" id="currentWeightInput"/>
 <label>Activité</label>
-<select id="activity"><option value="1.2">Sédentaire</option><option value="1.375">Légère</option><option value="1.55">Modérée</option><option value="1.725">Intense</option><option value="1.9">Très intense</option></select>
-<button id="calcBmr">Calculer</button>
+<select class="border rounded w-full p-2 mt-1" id="activity"><option value="1.2">Sédentaire</option><option value="1.375">Légère</option><option value="1.55">Modérée</option><option value="1.725">Intense</option><option value="1.9">Très intense</option></select>
+<button id="calcBmr" class="mt-2 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Calculer</button>
 <div id="calories"></div>
 </div>
+<footer class="text-center text-gray-500 mt-8">
+  <p>Code source sur <a href="https://github.com/user/repo" class="underline">GitHub</a></p>
+</footer>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -190,9 +131,9 @@ function load() {
 }
 function addItemToDOM(item) {
   const div = document.createElement('div');
-  div.className = 'exercise';
+  div.className = 'exercise flex items-center justify-between border border-gray-300 p-2 mt-2 bg-white bg-opacity-80 rounded shadow-sm cursor-move transition-transform hover:scale-105';
   const num = document.createElement('span');
-  num.className = 'num';
+  num.className = 'num w-6 inline-block';
   const span = document.createElement('span');
   const toggle = document.createElement('button');
   const edit = document.createElement('button');
@@ -203,7 +144,7 @@ function addItemToDOM(item) {
   }
 
   updateText();
-  toggle.className = 'toggle';
+  toggle.className = 'toggle ml-2 text-sm text-blue-600';
   toggle.innerText = item.success ? 'Réussi' : 'En progression';
   toggle.onclick = () => {
     item.success = !item.success;
@@ -212,7 +153,7 @@ function addItemToDOM(item) {
     save();
   };
 
-  edit.className = 'edit';
+  edit.className = 'edit ml-2 text-gray-500 hover:text-gray-800';
   edit.textContent = '✎';
   edit.onclick = () => {
     const n = prompt('Exercice', item.name);
@@ -230,7 +171,7 @@ function addItemToDOM(item) {
     save();
   };
 
-  remove.className = 'delete';
+  remove.className = 'delete ml-2 text-gray-500 hover:text-gray-800';
   remove.textContent = '✕';
   remove.onclick = () => {
     div.remove();
