@@ -84,6 +84,15 @@ body {
 <input class="border rounded w-full p-2 mt-1" type="number" id="rest" />
 <button id="addExercise" class="mt-2 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Ajouter</button>
 </div>
+<div id="exerciseHeader" class="hidden grid grid-cols-7 gap-2 font-semibold text-sm mt-4">
+  <span>#</span>
+  <span>Exercice</span>
+  <span>Séries</span>
+  <span>Répétitions</span>
+  <span>Poids (kg)</span>
+  <span>Repos (s)</span>
+  <span>Actions</span>
+</div>
 <div class="list min-h-[50px] space-y-2" id="exerciseList"></div>
 <button id="save" class="mt-4 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Sauvegarder</button>
 <div id="user" class="mt-6">
@@ -112,6 +121,7 @@ body {
 <script>
 const daySelect = document.getElementById('day');
 const list = document.getElementById('exerciseList');
+const header = document.getElementById('exerciseHeader');
 const ageInput = document.getElementById('age');
 const heightInput = document.getElementById('height');
 const sexInput = document.getElementById('sex');
@@ -177,21 +187,33 @@ new Sortable(list, { animation: 150, onSort: () => { updateNumbers(); save(); } 
 function load() {
  const data = localStorage.getItem(daySelect.value);
  list.innerHTML = '';
- if (data) JSON.parse(data).forEach(addItemToDOM);
+ const items = data ? JSON.parse(data) : [];
+ items.forEach(addItemToDOM);
+ header.classList.toggle('hidden', items.length === 0);
  updateNumbers();
 }
 function addItemToDOM(item) {
   const div = document.createElement('div');
-  div.className = 'exercise flex items-center justify-between border border-gray-300 p-2 mt-2 bg-white bg-opacity-80 rounded shadow-sm cursor-move transition-transform hover:scale-105';
+  div.className = 'exercise grid grid-cols-7 gap-2 items-center border border-gray-300 p-2 mt-2 bg-white bg-opacity-80 rounded shadow-sm cursor-move transition-transform hover:scale-105';
   const num = document.createElement('span');
-  num.className = 'num w-6 inline-block';
-  const span = document.createElement('span');
+  num.className = 'num';
+  const nameSpan = document.createElement('span');
+  const seriesSpan = document.createElement('span');
+  const repsSpan = document.createElement('span');
+  const weightSpan = document.createElement('span');
+  const restSpan = document.createElement('span');
+  const actions = document.createElement('div');
+  actions.className = 'flex gap-1';
   const toggle = document.createElement('button');
   const edit = document.createElement('button');
   const remove = document.createElement('button');
 
   function updateText() {
-    span.innerText = `${item.name} - ${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+    nameSpan.textContent = item.name;
+    seriesSpan.textContent = item.series;
+    repsSpan.textContent = item.reps;
+    weightSpan.textContent = item.weight + 'kg';
+    restSpan.textContent = item.rest + 's';
   }
 
   updateText();
@@ -226,12 +248,15 @@ function addItemToDOM(item) {
   remove.textContent = '✕';
   remove.onclick = () => {
     div.remove();
+    header.classList.toggle('hidden', list.children.length === 0);
     save();
   };
 
-  div.append(num, span, toggle, edit, remove);
+  actions.append(toggle, edit, remove);
+  div.append(num, nameSpan, seriesSpan, repsSpan, weightSpan, restSpan, actions);
   div.dataset.json = JSON.stringify(item);
   list.appendChild(div);
+  header.classList.remove('hidden');
   updateNumbers();
 }
 function updateNumbers() {
