@@ -108,6 +108,46 @@ const weightInput = document.getElementById('currentWeightInput');
 const activityInput = document.getElementById('activity');
 const caloriesDiv = document.getElementById('calories');
 const dayCells = document.querySelectorAll('#dayTable td');
+
+function getMacros(weight, goal) {
+  const ref = {
+    maintain: { p: 1.5, c: 3, f: 0.9 },
+    lose: { p: 2, c: 2, f: 0.8 },
+    gain: { p: 1.8, c: 4, f: 1 }
+  }[goal];
+  const g = {
+    protein: weight * ref.p,
+    carbs: weight * ref.c,
+    fat: weight * ref.f
+  };
+  const cal = {
+    protein: g.protein * 4,
+    carbs: g.carbs * 4,
+    fat: g.fat * 9
+  };
+  return { grams: g, calories: cal };
+}
+
+function displayResults(maintain, lose, gain, weight) {
+  const m = getMacros(weight, 'maintain');
+  const l = getMacros(weight, 'lose');
+  const g = getMacros(weight, 'gain');
+  caloriesDiv.innerHTML = `
+    <div class="font-semibold">Calories</div>
+    <div class="flex justify-around my-2">
+      <div>Maintien<br><span class="text-lg font-bold">${Math.round(maintain)}</span> kcal</div>
+      <div>Perte<br><span class="text-lg font-bold">${Math.round(lose)}</span> kcal</div>
+      <div>Prise<br><span class="text-lg font-bold">${Math.round(gain)}</span> kcal</div>
+    </div>
+    <table class="w-full text-sm mt-2">
+      <thead><tr><th class="text-left">Objectif</th><th>Protéines</th><th>Glucides</th><th>Lipides</th></tr></thead>
+      <tbody>
+        <tr><td>Maintien</td><td>${m.grams.protein.toFixed(0)} g (${Math.round(m.calories.protein)} kcal)</td><td>${m.grams.carbs.toFixed(0)} g (${Math.round(m.calories.carbs)} kcal)</td><td>${m.grams.fat.toFixed(0)} g (${Math.round(m.calories.fat)} kcal)</td></tr>
+        <tr><td>Perte</td><td>${l.grams.protein.toFixed(0)} g (${Math.round(l.calories.protein)} kcal)</td><td>${l.grams.carbs.toFixed(0)} g (${Math.round(l.calories.carbs)} kcal)</td><td>${l.grams.fat.toFixed(0)} g (${Math.round(l.calories.fat)} kcal)</td></tr>
+        <tr><td>Prise</td><td>${g.grams.protein.toFixed(0)} g (${Math.round(g.calories.protein)} kcal)</td><td>${g.grams.carbs.toFixed(0)} g (${Math.round(g.calories.carbs)} kcal)</td><td>${g.grams.fat.toFixed(0)} g (${Math.round(g.calories.fat)} kcal)</td></tr>
+      </tbody>
+    </table>`;
+}
 dayCells.forEach(td => {
   td.onclick = () => {
     dayCells.forEach(c => c.classList.remove('active'));
@@ -207,12 +247,12 @@ function loadUser() {
      const bmr = u.sex === 'male'
        ? 10 * u.weight + 6.25 * u.height - 5 * u.age + 5
        : 10 * u.weight + 6.25 * u.height - 5 * u.age - 161;
-     const maintain = bmr * parseFloat(u.activity || '1.2');
-     const lose = maintain - 500;
-     const gain = maintain + 500;
-     caloriesDiv.innerText = `Maintien: ${Math.round(maintain)} kcal - Perte: ${Math.round(lose)} kcal - Prise: ${Math.round(gain)} kcal`;
-   }
- }
+    const maintain = bmr * parseFloat(u.activity || '1.2');
+    const lose = maintain - 500;
+    const gain = maintain + 500;
+    displayResults(maintain, lose, gain, u.weight);
+  }
+}
 }
 
 function saveUser(u) {
@@ -231,10 +271,10 @@ document.getElementById('calcBmr').onclick = () => {
  const bmr = user.sex === 'male'
    ? 10 * user.weight + 6.25 * user.height - 5 * user.age + 5
    : 10 * user.weight + 6.25 * user.height - 5 * user.age - 161;
- const maintain = bmr * user.activity;
- const lose = maintain - 500;
- const gain = maintain + 500;
- caloriesDiv.innerText = `Maintien: ${Math.round(maintain)} kcal - Perte: ${Math.round(lose)} kcal - Prise: ${Math.round(gain)} kcal`;
+const maintain = bmr * user.activity;
+const lose = maintain - 500;
+const gain = maintain + 500;
+displayResults(maintain, lose, gain, user.weight);
 };
 document.getElementById('addExercise').onclick = () => {
  const item = {
