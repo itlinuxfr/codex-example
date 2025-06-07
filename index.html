@@ -349,14 +349,14 @@ document.getElementById('export').onclick = () => {
                    `${l.grams.fat.toFixed(0)} g (${Math.round(l.calories.fat)} kcal)`],
           ['Prise', `${g.grams.protein.toFixed(0)} g (${Math.round(g.calories.protein)} kcal)`,
                    `${g.grams.carbs.toFixed(0)} g (${Math.round(g.calories.carbs)} kcal)`,
-                   `${g.grams.fat.toFixed(0)} g (${Math.round(g.calories.fat)} kcal)`]
+                   `${g.grams.fat.toFixed(0)} g (${Math.round(g.calories.fat)} kcal)`],
+          [ {content: `Maintien: ${Math.round(maintain)} kcal`, colSpan: 4} ],
+          [ {content: `Perte: ${Math.round(lose)} kcal`, colSpan: 4} ],
+          [ {content: `Prise: ${Math.round(gain)} kcal`, colSpan: 4} ]
         ],
         startY: y
       });
       y = doc.lastAutoTable.finalY + 10;
-      doc.text(`Maintien: ${Math.round(maintain)} kcal`, 10, y); y += 5;
-      doc.text(`Perte: ${Math.round(lose)} kcal`, 10, y); y += 5;
-      doc.text(`Prise: ${Math.round(gain)} kcal`, 10, y); y += 5;
     }
   }
 
