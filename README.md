@@ -11,3 +11,9 @@ Pour vérifier la validité du code HTML, vous pouvez utiliser l'outil `tidy` :
 ```bash
 tidy -e index.html
 ```
+
+## Fonctionnalités
+- Sélection du jour via un tableau interactif
+- Ajout, modification ou suppression d'exercices avec numérotation et suivi de réussite
+- Stockage automatique dans le navigateur pour chaque jour
+- Calcul des besoins caloriques via le BMR en fonction de l'âge, de la taille, du sexe, du poids et de l'activité
