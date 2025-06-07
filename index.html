@@ -46,6 +46,9 @@ body {
   cursor:pointer;
   transition:color .3s;
 }
+.exercise {
+  grid-template-columns: 1.5rem 2fr repeat(4, 1fr) auto;
+}
 #modal { display:none; }
 #modal.show { display:flex; }
 </style>
@@ -222,7 +225,7 @@ function load() {
 }
 function addItemToDOM(item) {
   const div = document.createElement('div');
-  div.className = 'exercise grid grid-cols-7 gap-2 items-center border border-gray-300 p-2 mt-2 bg-white bg-opacity-80 rounded shadow-sm cursor-move transition-transform hover:scale-105';
+  div.className = 'exercise grid gap-2 items-center border border-gray-300 p-2 mt-2 bg-white bg-opacity-80 rounded shadow-sm cursor-move transition-transform hover:scale-105';
   const num = document.createElement('span');
   num.className = 'num';
   const nameSpan = document.createElement('span');
@@ -231,7 +234,7 @@ function addItemToDOM(item) {
   const weightSpan = document.createElement('span');
   const restSpan = document.createElement('span');
   const actions = document.createElement('div');
-  actions.className = 'flex gap-1';
+  actions.className = 'flex gap-1 flex-nowrap justify-end';
   const toggle = document.createElement('button');
   const historyBtn = document.createElement('button');
   const edit = document.createElement('button');
