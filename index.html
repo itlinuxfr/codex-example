@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
 <title>Programme de Musculation</title>
 <style>
 @keyframes gradient {
@@ -11,24 +14,33 @@
   100% {background-position:0% 50%;}
 }
 body {
-  background: linear-gradient(-45deg,#1e3a8a,#2563eb,#1e40af,#0a3b75);
-  background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
+  font-family:'Inter',sans-serif;
+  background:linear-gradient(-45deg,#f8fafc,#e2e8f0,#f8fafc,#e2e8f0);
+  background-size:400% 400%;
+  animation:gradient 15s ease infinite;
 }
 .day-table td.active {
   background:#0ea5e9;
   color:#fff;
 }
+.day-table td {
+  cursor:pointer;
+  transition:background-color .3s;
+}
+.day-table td:hover {
+  background:#e5e7eb;
+}
 .edit,.delete {
   background:none;
   border:none;
   cursor:pointer;
+  transition:color .3s;
 }
 </style>
 </head>
 <body>
-<div class="container max-w-2xl mx-auto bg-white bg-opacity-90 p-6 mt-10 rounded-lg shadow-lg">
-<h1 class="text-2xl font-semibold text-center mb-4">Programme de Musculation</h1>
+<div class="container max-w-3xl mx-auto bg-white/80 backdrop-blur-md p-8 mt-10 rounded-xl shadow-2xl">
+<h1 class="text-3xl font-semibold text-center mb-6">Programme de Musculation</h1>
 <table id="dayTable" class="day-table w-full border-collapse mb-4">
   <tr>
     <td data-day="lundi">Lun</td>
@@ -60,11 +72,11 @@ body {
 <input class="border rounded w-full p-2 mt-1" type="number" id="weight" />
 <label>Repos (sec)</label>
 <input class="border rounded w-full p-2 mt-1" type="number" id="rest" />
-<button id="addExercise" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded">Ajouter</button>
+<button id="addExercise" class="mt-2 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Ajouter</button>
 </div>
 <div class="list min-h-[50px] space-y-2" id="exerciseList"></div>
-<button id="save" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">Sauvegarder</button>
-<button id="export" class="mt-4 ml-2 bg-green-600 text-white px-4 py-2 rounded">Exporter en PDF</button>
+<button id="save" class="mt-4 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Sauvegarder</button>
+<button id="export" class="mt-4 ml-2 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Exporter en PDF</button>
 <div id="user" class="mt-6">
 <h2 class="text-xl font-semibold mb-2">Informations Utilisateur</h2>
 <label>Âge</label>
@@ -77,7 +89,7 @@ body {
 <input class="border rounded w-full p-2 mt-1" type="number" id="currentWeightInput"/>
 <label>Activité</label>
 <select class="border rounded w-full p-2 mt-1" id="activity"><option value="1.2">Sédentaire</option><option value="1.375">Légère</option><option value="1.55">Modérée</option><option value="1.725">Intense</option><option value="1.9">Très intense</option></select>
-<button id="calcBmr" class="mt-2 bg-indigo-600 text-white px-4 py-2 rounded">Calculer</button>
+<button id="calcBmr" class="mt-2 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Calculer</button>
 <div id="calories"></div>
 </div>
 <footer class="text-center text-gray-500 mt-8">
@@ -119,7 +131,7 @@ function load() {
 }
 function addItemToDOM(item) {
   const div = document.createElement('div');
-  div.className = 'exercise flex items-center justify-between border border-gray-300 p-2 mt-2 bg-white bg-opacity-80 rounded shadow-sm cursor-move';
+  div.className = 'exercise flex items-center justify-between border border-gray-300 p-2 mt-2 bg-white bg-opacity-80 rounded shadow-sm cursor-move transition-transform hover:scale-105';
   const num = document.createElement('span');
   num.className = 'num w-6 inline-block';
   const span = document.createElement('span');
