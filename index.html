@@ -46,6 +46,8 @@ body {
   cursor:pointer;
   transition:color .3s;
 }
+#modal { display:none; }
+#modal.show { display:flex; }
 </style>
 </head>
 <body>
@@ -111,9 +113,12 @@ body {
 <div id="calories" class="text-center"></div>
 </div>
 <button id="export" class="mt-4 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Exporter en PDF</button>
-<footer class="text-center text-gray-500 mt-8">
-  <p>Code source sur <a href="https://github.com/user/repo" class="underline">GitHub</a></p>
-</footer>
+  <footer class="text-center text-gray-500 mt-8">
+    <p>Code source sur <a href="https://github.com/user/repo" class="underline">GitHub</a></p>
+  </footer>
+</div>
+<div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
+  <div id="modalBox" class="bg-white p-4 rounded shadow w-80"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="jspdf.plugin.autotable.js"></script>
@@ -129,6 +134,21 @@ const weightInput = document.getElementById('currentWeightInput');
 const activityInput = document.getElementById('activity');
 const caloriesDiv = document.getElementById('calories');
 const dayCells = document.querySelectorAll('#dayTable td');
+const modal = document.getElementById('modal');
+const modalBox = document.getElementById('modalBox');
+
+function showModal(content) {
+  modalBox.innerHTML = content;
+  modal.classList.remove('hidden');
+  modal.classList.add('show');
+}
+
+function closeModal() {
+  modal.classList.add('hidden');
+  modal.classList.remove('show');
+}
+
+modal.onclick = e => { if (e.target === modal) closeModal(); };
 
 function getMacros(weight, goal) {
   const ref = {
@@ -238,29 +258,50 @@ function addItemToDOM(item) {
   historyBtn.className = 'history ml-2 text-gray-500 hover:text-gray-800';
   historyBtn.textContent = '📈';
   historyBtn.onclick = () => {
-    const lines = item.history.map(h => `${h.date} : ${h.weight}kg`).join('\n');
-    alert(lines || 'Aucune donnée de progression');
+    const lines = item.history.map(h => `<li>${h.date} : ${h.weight}kg</li>`).join('');
+    showModal(`<div><h3 class='font-semibold mb-2'>Historique</h3><ul class='list-disc pl-4'>${lines || '<li>Aucune donnée</li>'}</ul><div class='text-right mt-2'><button id='closeHist' class='px-2 py-1 bg-blue-600 text-white rounded'>Fermer</button></div></div>`);
+    document.getElementById('closeHist').onclick = closeModal;
   };
 
   edit.className = 'edit ml-2 text-gray-500 hover:text-gray-800';
   edit.textContent = '✎';
   edit.onclick = () => {
-    const n = prompt('Exercice', item.name);
-    const s = prompt('Séries', item.series);
-    const rps = prompt('Répétitions', item.reps);
-    const w = prompt('Poids (kg)', item.weight);
-    const r = prompt('Repos (sec)', item.rest);
-    if (n) item.name = n;
-    if (s) item.series = s;
-    if (rps) item.reps = rps;
-    if (w && w !== item.weight) {
-      item.weight = w;
-      item.history.push({ date: new Date().toLocaleDateString('fr-CA'), weight: w });
-    }
-    if (r) item.rest = r;
-    updateText();
-    div.dataset.json = JSON.stringify(item);
-    save();
+    showModal(`<div class='space-y-2'>
+      <label>Exercice</label>
+      <input id='editName' class='border rounded w-full p-1' value='${item.name}'>
+      <label>Séries</label>
+      <input id='editSeries' class='border rounded w-full p-1' type='number' value='${item.series}'>
+      <label>Répétitions</label>
+      <input id='editReps' class='border rounded w-full p-1' type='number' value='${item.reps}'>
+      <label>Poids (kg)</label>
+      <input id='editWeight' class='border rounded w-full p-1' type='number' value='${item.weight}'>
+      <label>Repos (sec)</label>
+      <input id='editRest' class='border rounded w-full p-1' type='number' value='${item.rest}'>
+      <div class='text-right space-x-2'>
+        <button id='cancelEdit' class='px-2 py-1 bg-gray-300 rounded'>Annuler</button>
+        <button id='saveEdit' class='px-2 py-1 bg-blue-600 text-white rounded'>OK</button>
+      </div>
+    </div>`);
+    document.getElementById('cancelEdit').onclick = closeModal;
+    document.getElementById('saveEdit').onclick = () => {
+      const n = document.getElementById('editName').value;
+      const s = document.getElementById('editSeries').value;
+      const rps = document.getElementById('editReps').value;
+      const w = document.getElementById('editWeight').value;
+      const r = document.getElementById('editRest').value;
+      item.name = n;
+      item.series = s;
+      item.reps = rps;
+      if (w && w !== item.weight) {
+        item.weight = w;
+        item.history.push({ date: new Date().toLocaleDateString('fr-CA'), weight: w });
+      }
+      item.rest = r;
+      updateText();
+      div.dataset.json = JSON.stringify(item);
+      save();
+      closeModal();
+    };
   };
 
   remove.className = 'delete ml-2 text-gray-500 hover:text-gray-800';
