@@ -76,7 +76,6 @@ body {
 </div>
 <div class="list min-h-[50px] space-y-2" id="exerciseList"></div>
 <button id="save" class="mt-4 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Sauvegarder</button>
-<button id="export" class="mt-4 ml-2 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Exporter en PDF</button>
 <div id="user" class="mt-6">
 <h2 class="text-xl font-semibold mb-2">Informations Utilisateur</h2>
 <label>Âge</label>
@@ -90,13 +89,15 @@ body {
 <label>Activité</label>
 <select class="border rounded w-full p-2 mt-1" id="activity"><option value="1.2">Sédentaire</option><option value="1.375">Légère</option><option value="1.55">Modérée</option><option value="1.725">Intense</option><option value="1.9">Très intense</option></select>
 <button id="calcBmr" class="mt-2 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Calculer</button>
-<div id="calories"></div>
+<div id="calories" class="text-center"></div>
 </div>
+<button id="export" class="mt-4 bg-gray-900 text-white px-4 py-2 rounded transition hover:bg-gray-700">Exporter en PDF</button>
 <footer class="text-center text-gray-500 mt-8">
   <p>Code source sur <a href="https://github.com/user/repo" class="underline">GitHub</a></p>
 </footer>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="jspdf.plugin.autotable.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 const daySelect = document.getElementById('day');
@@ -292,13 +293,64 @@ document.getElementById('addExercise').onclick = () => {
 document.getElementById('save').onclick = save;
 
 document.getElementById('export').onclick = () => {
- const { jsPDF } = window.jspdf;
- const doc = new jsPDF();
- doc.text(`Programme du ${daySelect.value}`, 10, 10);
- [...list.children].forEach((div, i) => {
-   doc.text(`${i+1}. ${div.innerText}`, 10, 20 + i*10);
- });
- doc.save(`programme-${daySelect.value}.pdf`);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const days = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+  let y = 10;
+
+  days.forEach(day => {
+    const data = localStorage.getItem(day);
+    if (!data) return;
+    const items = JSON.parse(data);
+    if (!items.length) return;
+    doc.text(day.charAt(0).toUpperCase() + day.slice(1), 10, y);
+    y += 5;
+    const rows = items.map((item, i) => {
+      const details = `${item.series}x${item.reps} ${item.weight}kg, repos ${item.rest}s`;
+      return [i + 1, item.name, details];
+    });
+    doc.autoTable({ head: [['#', 'Exercice', 'Détails']], body: rows, startY: y });
+    y = doc.lastAutoTable.finalY + 10;
+  });
+
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    const u = JSON.parse(userData);
+    if (u.age && u.height && u.weight) {
+      const bmr = u.sex === 'male'
+        ? 10 * u.weight + 6.25 * u.height - 5 * u.age + 5
+        : 10 * u.weight + 6.25 * u.height - 5 * u.age - 161;
+      const maintain = bmr * parseFloat(u.activity || '1.2');
+      const lose = maintain - 500;
+      const gain = maintain + 500;
+      const m = getMacros(u.weight, 'maintain');
+      const l = getMacros(u.weight, 'lose');
+      const g = getMacros(u.weight, 'gain');
+      doc.text('Calories', 10, y);
+      y += 5;
+      doc.autoTable({
+        head: [['Objectif', 'Protéines', 'Glucides', 'Lipides']],
+        body: [
+          ['Maintien', `${m.grams.protein.toFixed(0)} g (${Math.round(m.calories.protein)} kcal)`,
+                      `${m.grams.carbs.toFixed(0)} g (${Math.round(m.calories.carbs)} kcal)`,
+                      `${m.grams.fat.toFixed(0)} g (${Math.round(m.calories.fat)} kcal)`],
+          ['Perte', `${l.grams.protein.toFixed(0)} g (${Math.round(l.calories.protein)} kcal)`,
+                   `${l.grams.carbs.toFixed(0)} g (${Math.round(l.calories.carbs)} kcal)`,
+                   `${l.grams.fat.toFixed(0)} g (${Math.round(l.calories.fat)} kcal)`],
+          ['Prise', `${g.grams.protein.toFixed(0)} g (${Math.round(g.calories.protein)} kcal)`,
+                   `${g.grams.carbs.toFixed(0)} g (${Math.round(g.calories.carbs)} kcal)`,
+                   `${g.grams.fat.toFixed(0)} g (${Math.round(g.calories.fat)} kcal)`]
+        ],
+        startY: y
+      });
+      y = doc.lastAutoTable.finalY + 10;
+      doc.text(`Maintien: ${Math.round(maintain)} kcal`, 10, y); y += 5;
+      doc.text(`Perte: ${Math.round(lose)} kcal`, 10, y); y += 5;
+      doc.text(`Prise: ${Math.round(gain)} kcal`, 10, y); y += 5;
+    }
+  }
+
+  doc.save('programme.pdf');
 };
 
 daySelect.onchange = load;
