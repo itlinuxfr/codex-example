@@ -19,3 +19,4 @@ tidy -e index.html
 - Calcul des besoins caloriques via le BMR en fonction de l'âge, de la taille, du sexe, du poids et de l'activité
 - Interface modernisée avec Tailwind CSS et arrière-plan animé
 - Footer fournissant un lien vers le dépôt Git
+- Suivi de la progression des charges pour chaque exercice
